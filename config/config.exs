@@ -1,9 +1,8 @@
 use Mix.Config
 
 config :nostrum,
-  token: "YOUR_TOKEN_HERE",
-  num_shards: 1,
-  dev: false
+  token: System.get_env("DISCORD_API_TOKEN"),
+  num_shards: 1
 
 config :logger,
   level: :debug # :warn
