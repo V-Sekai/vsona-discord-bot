@@ -10,7 +10,10 @@ defmodule VSona do
   end
 end
 
-# Bot Permissions integer: 268443712
+# https://discord.com/oauth2/authorize?client_id=CLIENT_ID_HERE&scope=bot+applications.commands&permissions=268437568
+
+# Bot Permissions integer: 268437568
+# Also, add "Manage Messages" and "Read Message History" to the Welcome channels or categories.
 defmodule VSona.Supervisor do
   use Supervisor
   require Logger
@@ -43,7 +46,7 @@ defmodule VSona.Module do
     admin_command_desc = %{
       name: "assign_welcome_message",
       description: "React to a welcome message to assign a role",
-      default_permission: true,
+      default_permission: false,
       options: [
         %{
           # ApplicationCommandType::STRING
@@ -132,10 +135,14 @@ defmodule VSona.Module do
         else
           message = Api.get_channel_message(channel_id, message_id)
           Logger.debug(inspect(message))
-          topic = Api.get_channel!(channel_id).topic
+          topic = Api.get_channel(channel_id).topic
           if String.contains?(topic, "<@&#{role_id}>") and String.contains?(topic, emoji) do
-            Api.create_reaction!(channel_id, message_id, emoji)
-            {64, "Success"}
+            res = Api.create_reaction(channel_id, message_id, emoji)
+            if :ok = res do
+              {64, "Success"}
+            else
+              {64, "Error: #{inspect(res)}"}
+            end
           else
             {64, "Channel topic must contain \\<\\@\\&#{role_id}\\> and #{emoji}"}
           end
