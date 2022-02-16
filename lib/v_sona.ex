@@ -76,8 +76,22 @@ defmodule VSona.Module do
     #for guild_id <- guilds do
     tmpargs = inspect(admin_command_desc)
     Logger.debug("Creating command: #{tmpargs}")
-      Logger.debug(inspect(Api.create_guild_application_command(
-      guild_id, admin_command_desc)))
+    {res, cmd_result} = Api.create_guild_application_command(
+      guild_id, admin_command_desc)
+    if res == :ok do
+      owner_id = Api.get_guild!(guild_id).owner_id
+      permissions = [
+        %{
+            id: owner_id,
+            type: 2,
+            permission: true
+        }
+      ]
+      Api.edit_application_command_permissions(guild_id, cmd_result.id, permissions)
+    else
+      Logger.error("failed to create slash command")
+    end
+    Logger.debug(inspect(cmd_result))
     #end
     # Api.create_global_application_command(command: )
   end
