@@ -48,32 +48,8 @@ defmodule VSona.Module do
         %{
           # ApplicationCommandType::STRING
           type: 3,
-          name: "action",
-          description: "whether to assign or remove the role",
-          required: true,
-          choices: [
-            %{
-              name: "assign",
-              value: "assign"
-            },
-            %{
-              name: "remove",
-              value: "remove"
-            }
-          ]
-        },
-        %{
-          # ApplicationCommandType::STRING
-          type: 3,
           name: "message_id",
           description: "Message ID to react to",
-          required: true
-        },
-        %{
-          # ApplicationCommandType::ROLE
-          type: 8,
-          name: "role",
-          description: "role to assign or remove",
           required: true
         },
         %{
@@ -81,6 +57,13 @@ defmodule VSona.Module do
           type: 3,
           name: "emoji",
           description: "Reaction Emoji",
+          required: true
+        },
+        %{
+          # ApplicationCommandType::ROLE
+          type: 8,
+          name: "role",
+          description: "role to assign or remove",
           required: true
         }
       ]
@@ -136,7 +119,6 @@ defmodule VSona.Module do
     case msg.data.name do
       "assign_welcome_message" ->
         role_id = Enum.find(msg.data.options, fn opt -> opt.name == "role" end).value
-        do_add = Enum.find(msg.data.options, fn opt -> opt.name == "action" end).value == "assign"
         emoji = Enum.find(msg.data.options, fn opt -> opt.name == "emoji" end).value
         msg_id_parts = String.split(Enum.find(msg.data.options, fn opt -> opt.name == "message_id" end).value, "/")
         {channel_id, message_id} = if length(msg_id_parts) > 4 do
@@ -150,17 +132,12 @@ defmodule VSona.Module do
         else
           message = Api.get_channel_message(channel_id, message_id)
           Logger.debug(inspect(message))
-          if do_add do
-            topic = Api.get_channel!(channel_id).topic
-            if String.contains?(topic, "<@&#{role_id}>") and String.contains?(topic, emoji) do
-              Api.create_reaction!(channel_id, message_id, emoji)
-              {64, "Success"}
-            else
-              {64, "Channel topic must contain \\<\\@\\&#{role_id}\\> and #{emoji}"}
-            end
+          topic = Api.get_channel!(channel_id).topic
+          if String.contains?(topic, "<@&#{role_id}>") and String.contains?(topic, emoji) do
+            Api.create_reaction!(channel_id, message_id, emoji)
+            {64, "Success"}
           else
-            Api.delete_reaction!(channel_id, message_id, emoji)
-            {64, "Deleted Reactions"}
+            {64, "Channel topic must contain \\<\\@\\&#{role_id}\\> and #{emoji}"}
           end
         end
         response = %{
